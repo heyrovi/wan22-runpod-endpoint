@@ -13,19 +13,20 @@ RUN apt-get update && apt-get install -y \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Python Dependenciesss
+# Python Dependencies
 WORKDIR /workspace
 
 # Requirements installieren
 COPY requirements.txt /workspace/
 RUN pip install --no-cache-dir -r requirements.txt
 
-# WAN2.2 Repository klonen
-RUN git clone https://github.com/Wan-Video/Wan2.2.git /workspace/Wan2.2
+# WAN2.2 Repository klonen und Dependencies installieren
+RUN git clone https://github.com/Wan-Video/Wan2.2.git /workspace/Wan2.2 && \
+    cd /workspace/Wan2.2 && \
+    pip install -e .
 
 # Handler Script kopieren
 COPY handler.py /workspace/
-COPY wan2_2_inference.py /workspace/
 
 # Model Cache Directory
 RUN mkdir -p /workspace/models
@@ -34,5 +35,5 @@ RUN mkdir -p /workspace/models
 ENV HF_HOME="/workspace/.cache/huggingface"
 ENV TRANSFORMERS_CACHE="/workspace/.cache/huggingface/transformers"
 
-# RunPod Handler als Entrypoints
+# RunPod Handler als Entrypoint
 CMD ["python", "-u", "/workspace/handler.py"]
