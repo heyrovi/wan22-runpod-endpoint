@@ -34,5 +34,5 @@ RUN mkdir -p /workspace/models
 ENV HF_HOME="/workspace/.cache/huggingface"
 ENV TRANSFORMERS_CACHE="/workspace/.cache/huggingface/transformers"
 
-# RunPod Handler als Entrypoint
+# RunPod Handler als Entrypoints
 CMD ["python", "-u", "/workspace/handler.py"]
