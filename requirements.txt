@@ -17,3 +17,11 @@ imageio-ffmpeg
 safetensors
 huggingface-hub
 xformers==0.0.22.post7
+easydict
+decord
+pandas
+torchsde
+rotary-embedding-torch
+fairscale
+ftfy
+pytz
