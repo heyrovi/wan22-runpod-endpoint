@@ -1,39 +1,48 @@
-FROM runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel-ubuntu22.04
+FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
 
-# System Dependencies
+# Install system deps
 RUN apt-get update && apt-get install -y \
-    git \
-    wget \
-    ffmpeg \
-    libgl1-mesa-glx \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    libgomp1 \
+    git wget ffmpeg libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Python Dependencies
-WORKDIR /workspace
+WORKDIR /
 
-# Requirements installieren
-COPY requirements.txt /workspace/
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python deps
+RUN pip install --no-cache-dir \
+    runpod \
+    huggingface-hub \
+    opencv-python \
+    Pillow \
+    numpy \
+    imageio[ffmpeg] \
+    torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
-# WAN2.2 Repository klonen und Dependencies installieren
-RUN git clone https://github.com/Wan-Video/Wan2.2.git /workspace/Wan2.2 && \
-    cd /workspace/Wan2.2 && \
-    pip install -e .
+# Download WAN2.2
+RUN git clone https://github.com/Wan-Video/Wan2.2.git
 
-# Handler Script kopieren
-COPY handler.py /workspace/
+# Install WAN2.2 dependencies
+WORKDIR /Wan2.2
+RUN pip install --no-cache-dir \
+    diffusers==0.25.0 \
+    transformers==4.35.0 \
+    accelerate==0.24.0 \
+    imageio==2.33.0 \
+    decord==0.6.0 \
+    scipy \
+    einops \
+    omegaconf \
+    safetensors \
+    easydict \
+    pandas \
+    torchsde \
+    xformers==0.0.22.post7
 
-# Model Cache Directory
-RUN mkdir -p /workspace/models
+# Copy handler
+COPY handler.py /handler.py
 
-# Huggingface Cache setzen
-ENV HF_HOME="/workspace/.cache/huggingface"
-ENV TRANSFORMERS_CACHE="/workspace/.cache/huggingface/transformers"
+# Download models at build time
+RUN mkdir -p /models && \
+    huggingface-cli download Wan-AI/Wan2.2-I2V-A14B --local-dir /models/Wan2.2-I2V-A14B --local-dir-use-symlinks False && \
+    huggingface-cli download Wan-AI/Wan2.2-VAE --local-dir /models/vae --local-dir-use-symlinks False
 
-# RunPod Handler als Entrypoint
-CMD ["python", "-u", "/workspace/handler.py"]
+CMD ["python", "-u", "/handler.py"]
